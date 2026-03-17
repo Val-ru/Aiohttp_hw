@@ -6,6 +6,7 @@ from sqlalchemy.exc import IntegrityError
 from db import init_orm, close_orm, Session, User
 from sqlalchemy.ext.asyncio import AsyncSession
 from bcrypt import hashpw, gensalt
+from pydantic import BaseModel, ValidationError
 
 
 def hash_password(password: str) -> str:
@@ -38,6 +39,12 @@ app.middlewares.append(session_middleware)
 def get_error(err_cls: type[web.HTTPConflict | web.HTTPNotFound], err_msg):
     err_msg = json.dumps({"error": err_msg})
     return err_cls(text=err_msg, content_type="application/json")
+
+
+class AdvertisementCreate(BaseModel):
+    header: str
+    description: str
+    owner: str
 
 
 class AdvertisementView(web.View):
@@ -75,15 +82,12 @@ class AdvertisementView(web.View):
 
 
     async def post(self):
-        json_data = await self.request.json()
-        advertisement = Advertisement(
-            header=json_data["header"],
-            description=json_data["description"],
-            owner=json_data["owner"]
-        )
-
-        await self.add_advertisement(advertisement)
-        return web.json_response(advertisement.id_dict)
+        try:
+            json_data = await self.request.json()
+            data = AdvertisementCreate(**json_data)
+            return web.json_response(data.id_dict)
+        except ValidationError as e:
+            return web.json_response({"errors": e.errors()}, status=400)
 
 
     async def patch(self):
@@ -99,13 +103,14 @@ class AdvertisementView(web.View):
             advertisement.owner = json_data["owner"]
 
         await self.session.add(advertisement)
+        await self.session.commit()
 
         return web.json_response(advertisement.id_dict)
 
 
     async def delete(self):
 
-        advertisement = self.get_advertisement_by_id()
+        advertisement = await self.get_advertisement_by_id()
         await self.session.delete(advertisement)
         await self.session.commit()
         return web.json_response({"status": "Deleted successfully"})
