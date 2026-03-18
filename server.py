@@ -85,7 +85,13 @@ class AdvertisementView(web.View):
         try:
             json_data = await self.request.json()
             data = AdvertisementCreate(**json_data)
-            return web.json_response(data.id_dict)
+            advertisement = Advertisement(
+                header=data["header"],
+                description=["description"],
+                owner=["owner"]
+            )
+            await self.add_advertisement(advertisement)
+            return web.json_response(advertisement.id_dict())
         except ValidationError as e:
             return web.json_response({"errors": e.errors()}, status=400)
 
@@ -165,7 +171,7 @@ class UserView(web.View):
 
     async def patch(self):
         json_data = await self.request.json()
-        user = await self.get_user()
+        user = await self.get_user_by_id()
 
         if "name" in json_data:
             user.name = json_data["name"]
