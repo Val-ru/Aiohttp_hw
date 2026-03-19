@@ -85,13 +85,16 @@ class AdvertisementView(web.View):
         try:
             json_data = await self.request.json()
             data = AdvertisementCreate(**json_data)
+            user_id = 1
+
             advertisement = Advertisement(
-                header=data["header"],
-                description=["description"],
-                owner=["owner"]
+                header=data.header,
+                description=data.description,
+                owner=data.owner,
+                user_id=user_id
             )
             await self.add_advertisement(advertisement)
-            return web.json_response(advertisement.id_dict())
+            return web.json_response(advertisement.id_dict(), status=201)
         except ValidationError as e:
             return web.json_response({"errors": e.errors()}, status=400)
 
