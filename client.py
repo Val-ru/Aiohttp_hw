@@ -7,7 +7,7 @@ async def main():
 
         response = await session.post(
             "http://localhost:8080/users",
-            json={"name": "user_10", "password": "1234"},
+            json={"name": "user_2", "password": "1234"},
         )
         print(response.status)
         print(await response.text())
@@ -65,7 +65,7 @@ async def main():
 
 
         # response = await session.delete(
-        #     "http://localhost:8080/users/1",
+        #     "http://localhost:8080/users/120",
         # )
         # print(response.status)
         # print(await response.text())
